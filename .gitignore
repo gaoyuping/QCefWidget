@@ -1,0 +1,7 @@
+/build.*
+/dep/*
+/out
+*.aps
+.vs
+/build
+/deploy

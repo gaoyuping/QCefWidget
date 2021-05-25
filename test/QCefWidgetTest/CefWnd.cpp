@@ -20,9 +20,12 @@ CefWnd::CefWnd(QWidget* parent /*= nullptr*/) :
     pCefWidget_(nullptr),
     pCefGLWidget_(nullptr) {
   setAttribute(Qt::WA_DeleteOnClose, true);
+  qDebug() << __FUNCTION__ << this;
 }
 
-CefWnd::~CefWnd() {}
+CefWnd::~CefWnd() {
+  qDebug() << __FUNCTION__ << this;
+}
 
 void CefWnd::setupUi() {
   if (framelessWindow_) {
@@ -68,10 +71,12 @@ void CefWnd::setupUi() {
             &QCefOpenGLWidget::cefQueryRequest,
             this,
             &CefWnd::onCefQueryRequest);
+    connect(pCefGLWidget_, SIGNAL(signal_close()), this, SLOT(slot_close()), Qt::QueuedConnection);
+    connect(pCefWidget_, SIGNAL(destroyed(QObject*)), this, SLOT(slot_destroyed(QObject*)), Qt::QueuedConnection);
   }
   else {
     pCefWidget_ = new QCefWidget(initUrl_);
-    pCefWidget_->setObjectName("cefWidget");
+    //pCefWidget_->setObjectName("cefWidget");
     pCefWidget_->setOsrEnabled(osrEnabled_);
     pCefWidget_->setContextMenuEnabled(contextMenuEnabled_);
     pCefWidget_->setAutoShowDevToolsContextMenu(autoAddDevToolsContextMenu_);
@@ -91,6 +96,8 @@ void CefWnd::setupUi() {
             &QCefWidget::cefQueryRequest,
             this,
             &CefWnd::onCefQueryRequest);
+    connect(pCefWidget_, SIGNAL(signal_close()), this, SLOT(slot_close()), Qt::QueuedConnection);
+    connect(pCefWidget_, SIGNAL(destroyed(QObject*)), this, SLOT(slot_destroyed(QObject*)), Qt::QueuedConnection);
   }
 
   QHBoxLayout* hlMain = new QHBoxLayout();
@@ -211,13 +218,20 @@ void CefWnd::setBrowserBkColor(QColor c) {
 }
 
 void CefWnd::forceClose() {
-  if (pCefWidget_)
-    pCefWidget_->setAutoDestoryCefWhenCloseEvent(true);
-  else if (pCefGLWidget_)
-    pCefGLWidget_->setAutoDestoryCefWhenCloseEvent(true);
+  qDebug() << __FUNCTION__ << this;
+//   if (parentWidget())
+//   {
+//       PostMessage((HWND)winId(), WM_CLOSE, 0, 0);
+//       return;
+//   }
+//   forceClose_ = true;
+//   if (pCefWidget_) {
+//     pCefWidget_->setAutoDestoryCefWhenCloseEvent(true);
+//   }
+//   else if (pCefGLWidget_)
+//     pCefGLWidget_->setAutoDestoryCefWhenCloseEvent(true);
 
-  forceClose_ = true;
-  close();
+    close();
 }
 
 QSize CefWnd::sizeHint() const {
@@ -237,6 +251,23 @@ void CefWnd::hideEvent(QHideEvent* event) {
 }
 
 void CefWnd::closeEvent(QCloseEvent* event) {
+    qDebug() << __FUNCTION__ << this;
+    if (usingGLWidget_) {
+        if (pCefGLWidget_)
+        {
+            pCefGLWidget_->close();
+            event->ignore();
+            return;
+        }
+    }
+    else {
+        if (pCefWidget_)
+        {
+            pCefWidget_->close();
+            event->ignore();
+            return;
+        }
+    }
   if (!usingHideInsteadClose_ || forceClose_) {
     event->accept();
   }
@@ -339,4 +370,12 @@ void CefWnd::onCefQueryRequest(const QCefQuery& query) {
     pCefGLWidget_->responseCefQuery(rsp);
   else
     pCefWidget_->responseCefQuery(rsp);
+}
+
+void CefWnd::slot_close() {
+  setParent(nullptr);
+  close();
+}
+
+void CefWnd::slot_destroyed(QObject*) {
 }

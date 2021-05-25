@@ -92,7 +92,7 @@ QWidget* QCefManager::addBrowser(QWidget* pCefWidget,
   if (!pCefWidget || !browser)
     return nullptr;
 
-  QWidget* pTopWidget = getTopWidget(pCefWidget);
+  QWidget* pTopWidget = (pCefWidget);
   Q_ASSERT(pTopWidget);
 
   if (!pTopWidget)
@@ -103,6 +103,7 @@ QWidget* QCefManager::addBrowser(QWidget* pCefWidget,
   cefInfo.cefWidget = pCefWidget;
   cefInfo.cefWidgetImpl = cefWidgetImpl;
   cefInfo.cefWidgetTopWidget = pTopWidget;
+  //cefInfo.cefWidgetTopWidgetHwnd = (HWND)pTopWidget->winId();
   cefInfo.cefWidgetTopWidgetHwnd = (HWND)pTopWidget->window()->winId();
   cefInfo.osrMode = osrMode;
   cefInfo.browserStatus = BS_CREATED;
@@ -262,6 +263,10 @@ void QCefManager::setBrowserClosed(QWidget* pCefWidget) {
     if (it->cefWidget == pCefWidget) {
       it->browserStatus = BS_CLOSED;
       it->browser = nullptr;
+      if (it->cefWidgetTopWidgetHwnd)
+      {
+          PostMessage(it->cefWidgetTopWidgetHwnd, WM_CLOSE, 0, 0);
+      }
     }
   }
 }
@@ -324,6 +329,8 @@ QWidget* QCefManager::getTopWidget(QWidget* pWidget) {
   Q_ASSERT(pWidget);
   if (!pWidget)
     return nullptr;
+  
+  return pWidget;
 
   QWidget* topWidget = pWidget;
   while (topWidget->parent()) {

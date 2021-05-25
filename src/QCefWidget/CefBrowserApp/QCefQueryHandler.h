@@ -7,13 +7,14 @@
 #include <include/wrapper/cef_stream_resource_handler.h>
 #include <include/wrapper/cef_message_router.h>
 #include "Include/QCefVersion.h"
+#include <QPointer>
 
 class QCefWidgetImpl;
 
 class QCefQueryHandler : public CefBaseRefCounted,
                          public CefMessageRouterBrowserSide::Handler {
  public:
-  QCefQueryHandler(QCefWidgetImpl* pImpl);
+  QCefQueryHandler(QPointer<QCefWidgetImpl> pImpl);
   ~QCefQueryHandler();
 
   virtual bool OnQuery(CefRefPtr<CefBrowser> browser,
@@ -31,7 +32,7 @@ class QCefQueryHandler : public CefBaseRefCounted,
   Response(int64_t query, bool success, const CefString& response, int error);
 
  private:
-  QCefWidgetImpl* pCefImpl_;
+  QPointer<QCefWidgetImpl> pCefImpl_;
   std::map<int64, CefRefPtr<Callback>> mapCallback_;
   std::mutex mtxCallbackMap_;
 

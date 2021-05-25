@@ -20,13 +20,16 @@ QCefWidget::QCefWidget(const QString& url, QWidget* parent) :
   setAttribute(Qt::WA_StyledBackground, true);
 
   pImpl_ = std::make_unique<QCefWidgetImpl>(WidgetType::WT_Widget, this);
+  connect(pImpl_.get(), SIGNAL(destroyed(QObject *)), this, SIGNAL(signal_destroyed(QObject *)));
+  connect(pImpl_.get(), SIGNAL(signal_close()), this, SIGNAL(signal_close()), Qt::QueuedConnection);
+  
   if (!url.isEmpty()) {
     pImpl_->navigateToUrl(url);
   }
 }
 
 QCefWidget::~QCefWidget() {
-  qDebug().noquote() << "QCefWidget::~QCefWidget";
+  qDebug().noquote() << "QCefWidget::~QCefWidget" << this;
 }
 
 void QCefWidget::navigateToUrl(const QString& url) {
@@ -190,6 +193,12 @@ QString QCefWidget::CefVersion() {
       .arg(CEF_VERSION_MAJOR)
       .arg(CEF_VERSION_MINOR)
       .arg(CEF_VERSION_PATCH);
+}
+
+void QCefWidget::slot_close()
+{
+    qDebug() << __FUNCTION__;
+    close();
 }
 
 bool QCefWidget::nativeEvent(const QByteArray& eventType,

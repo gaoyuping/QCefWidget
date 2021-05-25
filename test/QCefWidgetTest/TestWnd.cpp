@@ -21,10 +21,12 @@ QSize kWindowDefaultSize = QSize(900, 600);
 TestWnd::TestWnd(QWidget* parent) :
     QWidget(parent),
     query_(nullptr),
+    m_maskptr(nullptr),
     mainProcessCpuCounter_(nullptr),
     mainProcessMemCounter_(nullptr),
     renderProcessCpuCounter_(nullptr),
     renderProcessMemCounter_(nullptr) {
+    qDebug() << __FUNCTION__ << this;
   QCefSetting::setFlashPlugin(
       "TestResource\\pepperflash\\26.0.0.126\\pepflashplayer.dll", "26.0.0.126");
 
@@ -44,7 +46,7 @@ TestWnd::TestWnd(QWidget* parent) :
 
 TestWnd::~TestWnd() {
   PdhCloseQuery(query_);
-  qDebug() << "TestWnd::~TestWnd";
+  qDebug() << "TestWnd::~TestWnd" << this;
 }
 
 void TestWnd::closeEvent(QCloseEvent* event) {
@@ -360,6 +362,20 @@ void TestWnd::onPushButtonNewBrowserClicked() {
 
   if (!checkboxInitHide_->isChecked())
     pCefWnd->show();
+
+
+  if (m_maskptr)
+  {
+      m_maskptr->raise();
+  }
+  else
+  {
+    m_maskptr = new QLabel(this);
+    m_maskptr->setStyleSheet("background: rgba(255,0,0,50%)");
+    m_maskptr->move(0, 0);
+    m_maskptr->resize(700, 400);
+    m_maskptr->show();
+  }
 }
 
 void TestWnd::onPushButtonQuickSettingForIrregularWndClicked() {

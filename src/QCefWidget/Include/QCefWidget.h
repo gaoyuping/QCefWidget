@@ -86,7 +86,8 @@ class QCEFWIDGET_EXPORT QCefWidget : public QWidget {
 
   static QString QCefWidgetVersion();
   static QString CefVersion();
- signals:
+
+signals:
   void loadingStateChanged(bool isLoading, bool canGoBack, bool canGoForward);
   void titleChanged(QString title);
   void urlChanged(bool isMainFrame, const QString& url);
@@ -102,6 +103,11 @@ class QCEFWIDGET_EXPORT QCefWidget : public QWidget {
                           int frameId,
                           const QString& method,
                           const QVariantList& arguments);
+  void signal_close();
+  void signal_destroyed(QObject *);
+
+protected slots:
+    void slot_close();
 
  protected:
   bool nativeEvent(const QByteArray& eventType,

@@ -55,7 +55,7 @@ class QCefBrowserHandler : public CefClient,
                            //public CefResourceHandler,
                            public CefRenderHandler {
  public:
-  QCefBrowserHandler(QCefWidgetImpl* pImpl);
+  QCefBrowserHandler(QPointer<QCefWidgetImpl> pImpl);
   ~QCefBrowserHandler();
 
 #pragma region CefClient
@@ -384,7 +384,7 @@ class QCefBrowserHandler : public CefClient,
   CefRect getPopupRectInWebView(const CefRect& original_rect) const;
 
  private:
-  QCefWidgetImpl* pImpl_;
+  QPointer<QCefWidgetImpl> pImpl_;
 
   int browserCount_;
 

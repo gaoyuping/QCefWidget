@@ -24,7 +24,7 @@ enum InternalMenuId {
 };
 }
 
-QCefBrowserHandler::QCefBrowserHandler(QCefWidgetImpl* pImpl) :
+QCefBrowserHandler::QCefBrowserHandler(QPointer<QCefWidgetImpl> pImpl) :
     isClosing_(false),
     pCefqueryHandler_(new QCefQueryHandler(pImpl)),
     pResourceManager_(new CefResourceManager()),
@@ -414,7 +414,6 @@ void QCefBrowserHandler::OnBeforeClose(CefRefPtr<CefBrowser> browser) {
         pMessageRouter_ = nullptr;
       }
 
-      Q_ASSERT(pImpl_);
       if (pImpl_) {
         pImpl_->browserDestoryedNotify(browser);
       }
@@ -657,6 +656,9 @@ bool QCefBrowserHandler::GetScreenPoint(CefRefPtr<CefBrowser> browser,
                                         int& screenX,
                                         int& screenY) {
   CEF_REQUIRE_UI_THREAD();
+  if (!pImpl_) {
+    return false;
+  }
   QWidget* pWidget = pImpl_->getWidget();
 
   DCHECK(pWidget);
@@ -677,6 +679,10 @@ bool QCefBrowserHandler::GetScreenPoint(CefRefPtr<CefBrowser> browser,
 
 void QCefBrowserHandler::GetViewRect(CefRefPtr<CefBrowser> browser, CefRect& rect) {
   CEF_REQUIRE_UI_THREAD();
+  if (!pImpl_)
+  {
+    return;
+  }
   QWidget* pWidget = pImpl_->getWidget();
 
   DCHECK(pWidget);
@@ -810,7 +816,9 @@ void QCefBrowserHandler::OnPaint(CefRefPtr<CefBrowser> browser,
     } while (false);
   }
 
-  float dpiScale = pImpl_->deviceScaleFactor();
+  float dpiScale = 1;
+  if (pImpl_)
+      pImpl_->deviceScaleFactor();
 
   QRect updateRegion = {0, 0, 0, 0};
   for (auto& dr : dirtyRects) {

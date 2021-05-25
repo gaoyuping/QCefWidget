@@ -79,6 +79,9 @@ public:
   bool removeResourceProvider(const QString &identifier);
   bool removeAllResourceProvider();
 
+signals:
+    void signal_close();
+
 protected:
   bool sendEventNotifyMessage(const QString &name, const QCefEvent &event);
   CefRefPtr<CefBrowserHost> getCefBrowserHost();
@@ -90,7 +93,7 @@ protected:
   static BOOL CALLBACK SubclassWindowsProc(HWND hwnd, LPARAM lParam);
   static BOOL CALLBACK UnSubclassWindowsProc(HWND hwnd, LPARAM lParam);
 
-private slots:
+ private slots:
   void onScreenChanged(QScreen *screen);
 
 private:

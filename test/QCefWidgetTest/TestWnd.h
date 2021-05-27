@@ -68,6 +68,8 @@ class TestWnd : public QWidget {
   int cpuProcessorCount_;
 
   QLabel* labelVersion_;
+
+  QLabel * m_maskptr;
 };
 
 #endif  // TEST_WND_H__

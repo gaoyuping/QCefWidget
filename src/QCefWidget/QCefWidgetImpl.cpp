@@ -40,13 +40,15 @@ QCefWidgetImpl::QCefWidgetImpl(WidgetType vt, QWidget* pWidget) :
           &QWindow::screenChanged,
           this,
           &QCefWidgetImpl::onScreenChanged);
+  
 }
 
 QCefWidgetImpl::~QCefWidgetImpl() {
   qDebug().noquote() << "QCefWidgetImpl::~QCefWidgetImpl:" << this;
   ::DeleteObject(draggableRegion_);
   draggableRegion_ = nullptr;
-
+  pTopWidget_ = nullptr;
+  pWidget_ = nullptr;
   widgetWId_ = 0;
   pQCefViewHandler_ = nullptr;
   if (pCefUIEventWin_)
@@ -219,8 +221,8 @@ bool QCefWidgetImpl::createDevTools(CefRefPtr<CefBrowser> targetBrowser) {
                         browserSetting_.backgroundColor.green(),
                         browserSetting_.backgroundColor.blue());
   }
-
-  pQCefViewHandler_ = new QCefBrowserHandler(this);
+  QPointer<QCefWidgetImpl> ptr = this;
+  pQCefViewHandler_ = new QCefBrowserHandler(ptr);
 
   if (targetBrowser) {
     targetBrowser->GetHost()->ShowDevTools(
@@ -271,10 +273,10 @@ void QCefWidgetImpl::browserDestoryedNotify(CefRefPtr<CefBrowser> browser) {
     QCefManager::getInstance().unhookTopWidget(pTopWidget_);
     QCefManager::getInstance().removeAllCefWidgets(pTopWidget_);
     if (pTopWidget_) {
-      QMetaObject::invokeMethod(
-          pTopWidget_, [this]() { pTopWidget_->close(); }, Qt::QueuedConnection);
+      QMetaObject::invokeMethod(pTopWidget_, [this]() { if(pTopWidget_)pTopWidget_->close(); }, Qt::QueuedConnection);
     }
   }
+  emit signal_close();
 }
 
 LRESULT CALLBACK QCefWidgetImpl::SubclassedWindowProc(HWND hWnd,
@@ -573,6 +575,11 @@ bool QCefWidgetImpl::event(QEvent* event) {
   if (event->type() == QEvent::WinIdChange) {
     widgetWId_ = pWidget_ ? pWidget_->winId() : 0;
     qDebug().noquote() << "QEvent::WinIdChange to:" << widgetWId_;
+  }
+  else if (QEvent::Close == event->type())
+  {
+      if (getCefBrowserHost()) getCefBrowserHost()->CloseBrowser(false);
+      //if (getCefBrowserHost()) getCefBrowserHost()->TryCloseBrowser();
   }
   //else if (event->type() == QEvent::Resize) {
   //   qDebug().noquote() << "QEvent::Resize";
@@ -909,7 +916,9 @@ void QCefWidgetImpl::setBrowserBackgroundColor(const QColor& color) {
 
 void QCefWidgetImpl::updateCefWidget(const QRect& region) {
   if (pWidget_) {
-    pWidget_->update(region);
+    if (region.width() > 0 && region.height() > 0) {
+      pWidget_->update(region);
+    }
   }
 }
 

@@ -22,8 +22,8 @@ class QCefWidgetUIEventHandlerWin {
   void OnTouchEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
   void OnFocusEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
   void OnIMEEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-  void
-  OnCaptureLostEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+  void OnCloseBrowser();
+  void OnCaptureLostEvent(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
   void OnImeCompositionRangeChanged(
       CefRefPtr<CefBrowser> browser,

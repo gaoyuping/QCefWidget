@@ -79,6 +79,9 @@ public:
   bool removeResourceProvider(const QString &identifier);
   bool removeAllResourceProvider();
 
+signals:
+    void signal_close();
+
 protected:
   bool sendEventNotifyMessage(const QString &name, const QCefEvent &event);
   CefRefPtr<CefBrowserHost> getCefBrowserHost();

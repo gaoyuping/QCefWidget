@@ -594,6 +594,13 @@ void QCefWidgetUIEventHandlerWin::OnIMEEvent(HWND hWnd,
   }
 }
 
+void QCefWidgetUIEventHandlerWin::OnCloseBrowser()
+{
+  CefRefPtr<CefBrowserHost> host = browserHost();
+  if (host)
+    host->TryCloseBrowser();
+}
+
 void QCefWidgetUIEventHandlerWin::OnCaptureLostEvent(HWND hWnd,
                                                      UINT message,
                                                      WPARAM wParam,

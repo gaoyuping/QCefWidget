@@ -92,7 +92,7 @@ QWidget* QCefManager::addBrowser(QWidget* pCefWidget,
   if (!pCefWidget || !browser)
     return nullptr;
 
-  QWidget* pTopWidget = getTopWidget(pCefWidget);
+  QWidget* pTopWidget = (pCefWidget);
   Q_ASSERT(pTopWidget);
 
   if (!pTopWidget)

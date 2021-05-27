@@ -321,7 +321,7 @@ void TestWnd::setupUi() {
 
 void TestWnd::onPushButtonNewBrowserClicked() {
   CefWnd* pCefWnd = new CefWnd(this);
-  connect(pCefWnd, &QWidget::destroyed, this, &TestWnd::onCefWndDestroyed);
+  connect(pCefWnd, SIGNAL(destroyed(QObject *)), this, SLOT(onCefWndDestroyed(QObject *)));
   pCefWnd->setUsingGLWidget(radioButtonCefOpenGLWidget_->isChecked());
   pCefWnd->setFramelessWindow(checkboxFramelessWindow_->isChecked());
   pCefWnd->setTranslucentWindowBackground(

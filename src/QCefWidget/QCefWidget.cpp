@@ -13,6 +13,8 @@
 #include <include/cef_sandbox_win.h>
 #include "QCefManager.h"
 
+QString g_strobj;;
+
 QCefWidget::QCefWidget(const QString& url, QWidget* parent) :
     QWidget(parent) {
   setAttribute(Qt::WA_NativeWindow, true);
@@ -22,7 +24,9 @@ QCefWidget::QCefWidget(const QString& url, QWidget* parent) :
   pImpl_ = std::make_unique<QCefWidgetImpl>(WidgetType::WT_Widget, this);
   connect(pImpl_.get(), SIGNAL(destroyed(QObject *)), this, SIGNAL(signal_destroyed(QObject *)));
   connect(pImpl_.get(), SIGNAL(signal_close()), this, SIGNAL(signal_close()), Qt::QueuedConnection);
-  
+  static int i = 1;
+  g_strobj = QString("strobj_%1_").arg(i++);
+  pImpl_->setObjectName(QString("CefWidgetImpl_%1").arg(g_strobj));
   if (!url.isEmpty()) {
     pImpl_->navigateToUrl(url);
   }
@@ -197,7 +201,7 @@ QString QCefWidget::CefVersion() {
 
 void QCefWidget::slot_close()
 {
-    qDebug() << __FUNCTION__;
+    qDebug() << __FUNCTION__ << this;
     close();
 }
 
@@ -228,7 +232,20 @@ void QCefWidget::hideEvent(QHideEvent* event) {
 
 bool QCefWidget::event(QEvent* event) {
   // pImpl_ may be empty, if we call winId in QCefWidgetImpl::QCefWidgetImpl().
-    qDebug() << __FUNCTION__ <<event->type();
+    if (QEvent::Paint != event->type() && QEvent::ScreenChangeInternal != event->type() &&
+        QEvent::PaletteChange != event->type() && QEvent::PaletteChange != event->type() &&
+        QEvent::HideToParent != event->type() && QEvent::PlatformSurface != event->type() &&
+        QEvent::Hide != event->type() && QEvent::UpdateLater != event->type() &&
+        QEvent::MetaCall != event->type() && QEvent::DynamicPropertyChange != event->type() &&
+        QEvent::ShowToParent != event->type() && QEvent::Polish != event->type() &&
+        QEvent::Resize != event->type() && QEvent::Move != event->type() &&
+        QEvent::WindowIconChange != event->type() && QEvent::StyleChange != event->type() &&
+        QEvent::ParentAboutToChange != event->type() && QEvent::PolishRequest != event->type() &&
+        QEvent::ParentChange != event->type() && QEvent::StyleChange != event->type() &&
+        QEvent::WinIdChange != event->type() && QEvent::InputMethodQuery != event->type())
+    {
+        qDebug() << __FUNCTION__ << this << event->type();
+    }
   if (!pImpl_)
     return QWidget::event(event);
 

@@ -320,6 +320,7 @@ void TestWnd::setupUi() {
 }
 
 void TestWnd::onPushButtonNewBrowserClicked() {
+    static int icount = 0;
   CefWnd* pCefWnd = new CefWnd(this);
   connect(pCefWnd, SIGNAL(destroyed(QObject *)), this, SLOT(onCefWndDestroyed(QObject *)));
   pCefWnd->setUsingGLWidget(radioButtonCefOpenGLWidget_->isChecked());
@@ -363,6 +364,19 @@ void TestWnd::onPushButtonNewBrowserClicked() {
   if (!checkboxInitHide_->isChecked())
     pCefWnd->show();
 
+  switch (++icount)
+  {
+  case 1:
+      pCefWnd->move(0, 0);
+      pCefWnd->resize(500, 200);
+      break;
+  case 2:
+      pCefWnd->move(0, 200);
+      pCefWnd->resize(500, 200);
+      break;
+  default:
+      break;
+  }
 
   if (m_maskptr)
   {

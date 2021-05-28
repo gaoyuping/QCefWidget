@@ -3,6 +3,8 @@
 #include "QCefOpenGLWidget.h"
 #include <QtWidgets>
 
+QString g_strobj;
+
 CefWnd::CefWnd(QWidget* parent /*= nullptr*/) :
     QWidget(parent),
     framelessWindow_(false),
@@ -36,8 +38,9 @@ void CefWnd::setupUi() {
   if (translucentWindowBackground_) {
     setAttribute(Qt::WA_TranslucentBackground);
   }
-
-  this->setObjectName("CefWnd");
+  static int i = 1;
+  g_strobj = QString("strobj_%1_").arg(i++);
+  this->setObjectName(QString("CefWnd_%1").arg(g_strobj));
   this->setWindowTitle(
       QString("%1").arg(initUrl_.isEmpty() ? "Not Created" : initUrl_));
   this->setWindowIcon(QIcon(":/QCefWidgetTest/images/logo.svg"));
@@ -51,7 +54,7 @@ void CefWnd::setupUi() {
 
   if (usingGLWidget_) {
     pCefGLWidget_ = new QCefOpenGLWidget(initUrl_);
-    pCefGLWidget_->setObjectName("cefWidget");
+    pCefGLWidget_->setObjectName(QString("cefOpenGlWidget_%1").arg(g_strobj));
     pCefGLWidget_->setOsrEnabled(osrEnabled_);
     pCefGLWidget_->setContextMenuEnabled(contextMenuEnabled_);
     pCefGLWidget_->setAutoShowDevToolsContextMenu(autoAddDevToolsContextMenu_);
@@ -76,7 +79,7 @@ void CefWnd::setupUi() {
   }
   else {
     pCefWidget_ = new QCefWidget(initUrl_);
-    pCefWidget_->setObjectName("cefWidget");
+    pCefWidget_->setObjectName(QString("cefWidget_%1").arg(g_strobj));
     pCefWidget_->setOsrEnabled(osrEnabled_);
     pCefWidget_->setContextMenuEnabled(contextMenuEnabled_);
     pCefWidget_->setAutoShowDevToolsContextMenu(autoAddDevToolsContextMenu_);
@@ -264,8 +267,10 @@ void CefWnd::closeEvent(QCloseEvent* event) {
     else {
         if (pCefWidget_)
         {
+            setParent(nullptr);
+            hide();
             pCefWidget_->close();
-            qDebug() << event;
+            qDebug() << __FUNCTION__ <<this << event;
             event->ignore();
             return;
         }
@@ -375,6 +380,8 @@ void CefWnd::onCefQueryRequest(const QCefQuery& query) {
 }
 
 void CefWnd::slot_close() {
+    qDebug() << __FUNCTION__ << this;
+    //return;
   setParent(nullptr);
   pCefWidget_ = nullptr;
   close();

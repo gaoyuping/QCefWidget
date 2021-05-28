@@ -261,6 +261,10 @@ void QCefWidgetImpl::browserClosingNotify(CefRefPtr<CefBrowser> browser) {
   if (pCefUIEventWin_)
     pCefUIEventWin_.reset();
   QCefManager::getInstance().setBrowserClosing(pWidget_);
+  if (browser && browser->GetHost() && browser->GetHost()->GetWindowHandle())
+  {
+      ::PostMessage(browser->GetHost()->GetWindowHandle(), WM_CLOSE, 0, 0);
+  }
 }
 
 void QCefWidgetImpl::browserDestoryedNotify(CefRefPtr<CefBrowser> browser) {
@@ -273,7 +277,14 @@ void QCefWidgetImpl::browserDestoryedNotify(CefRefPtr<CefBrowser> browser) {
     QCefManager::getInstance().unhookTopWidget(pTopWidget_);
     QCefManager::getInstance().removeAllCefWidgets(pTopWidget_);
     if (pTopWidget_) {
-      QMetaObject::invokeMethod(pTopWidget_, [this]() { if(pTopWidget_)pTopWidget_->close(); }, Qt::QueuedConnection);
+      QMetaObject::invokeMethod(pTopWidget_, [this]()
+      {
+          if (pTopWidget_)
+          {
+              qDebug() << "pTopWidget_ = " <<  pTopWidget_;
+             //pTopWidget_->close();
+          }
+      }, Qt::QueuedConnection);
     }
   }
   emit signal_close();
@@ -283,6 +294,7 @@ LRESULT CALLBACK QCefWidgetImpl::SubclassedWindowProc(HWND hWnd,
                                                       UINT message,
                                                       WPARAM wParam,
                                                       LPARAM lParam) {
+    qDebug() << __FUNCTION__ << hWnd << message << wParam << lParam;
   WNDPROC hPreWndProc =
       reinterpret_cast<WNDPROC>(::GetPropW(hWnd, kPreWndProc));
   HRGN hRegion = reinterpret_cast<HRGN>(::GetPropW(hWnd, kDraggableRegion));
@@ -307,6 +319,8 @@ LRESULT CALLBACK QCefWidgetImpl::SubclassedWindowProc(HWND hWnd,
 void QCefWidgetImpl::subclassWindow(HWND hWnd,
                                     HRGN hRegion,
                                     HWND hTopLevelWnd) {
+    qDebug() << __FUNCTION__ << hWnd << hRegion << hTopLevelWnd;
+
   HANDLE hParentWndProc = ::GetPropW(hWnd, kPreWndProc);
   if (hParentWndProc) {
     ::SetPropW(hWnd, kDraggableRegion, reinterpret_cast<HANDLE>(hRegion));
@@ -326,7 +340,8 @@ void QCefWidgetImpl::subclassWindow(HWND hWnd,
 }
 
 void QCefWidgetImpl::unSubclassWindow(HWND hWnd) {
-  LONG_PTR hPreWndProc =
+    qDebug() << __FUNCTION__ << hWnd;
+    LONG_PTR hPreWndProc =
       reinterpret_cast<LONG_PTR>(::GetPropW(hWnd, kPreWndProc));
   if (hPreWndProc) {
     LONG_PTR hPreviousWndProc =
@@ -342,7 +357,8 @@ void QCefWidgetImpl::unSubclassWindow(HWND hWnd) {
 }
 
 BOOL CALLBACK QCefWidgetImpl::SubclassWindowsProc(HWND hwnd, LPARAM lParam) {
-  QCefWidgetImpl* pImpl = (QCefWidgetImpl*)lParam;
+    qDebug() << __FUNCTION__ << hwnd << lParam;
+    QCefWidgetImpl* pImpl = (QCefWidgetImpl*)lParam;
   subclassWindow(hwnd,
                  reinterpret_cast<HRGN>(pImpl->draggableRegion_),
                  (HWND)pImpl->pTopWidget_->winId());
@@ -350,7 +366,8 @@ BOOL CALLBACK QCefWidgetImpl::SubclassWindowsProc(HWND hwnd, LPARAM lParam) {
 }
 
 BOOL CALLBACK QCefWidgetImpl::UnSubclassWindowsProc(HWND hwnd, LPARAM lParam) {
-  unSubclassWindow(hwnd);
+    qDebug() << __FUNCTION__ << hwnd << lParam;
+    unSubclassWindow(hwnd);
   return TRUE;
 }
 
@@ -516,6 +533,7 @@ void QCefWidgetImpl::mainFrameLoadFinishedNotify() {
 
 bool QCefWidgetImpl::sendEventNotifyMessage(const QString& name,
                                             const QCefEvent& event) {
+    qDebug() << __FUNCTION__ << this;
   if (!pQCefViewHandler_)
     return false;
   CefRefPtr<CefProcessMessage> msg =
@@ -948,6 +966,7 @@ bool QCefWidgetImpl::addResourceProvider(QCefResourceProvider* provider,
 }
 
 bool QCefWidgetImpl::removeResourceProvider(const QString& identifier) {
+    qDebug() << __FUNCTION__ << this;
   if (pQCefViewHandler_) {
     return pQCefViewHandler_->removeResourceProvider(identifier);
   }
@@ -962,6 +981,7 @@ bool QCefWidgetImpl::removeResourceProvider(const QString& identifier) {
 }
 
 bool QCefWidgetImpl::removeAllResourceProvider() {
+    qDebug() << __FUNCTION__ << this;
   if (pQCefViewHandler_) {
     return pQCefViewHandler_->removeAllResourceProvider();
   }

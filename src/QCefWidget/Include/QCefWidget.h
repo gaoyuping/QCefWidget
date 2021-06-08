@@ -103,10 +103,6 @@ class QCEFWIDGET_EXPORT QCefWidget : public QWidget {
                           const QString& method,
                           const QVariantList& arguments);
   void signal_close();
-  void signal_destroyed(QObject *);
-
-protected slots:
-    void slot_close();
 
  protected:
   bool nativeEvent(const QByteArray& eventType,

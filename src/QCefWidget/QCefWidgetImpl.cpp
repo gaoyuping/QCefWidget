@@ -19,7 +19,7 @@ LPCWSTR kPreWndProc = L"CefPreWndProc";
 LPCWSTR kDraggableRegion = L"CefDraggableRegion";
 LPCWSTR kTopLevelHwnd = L"CefTopLevelHwnd";
 }  // namespace
-
+#include "include/QCefWidget.h"
 QCefWidgetImpl::QCefWidgetImpl(WidgetType vt, QWidget* pWidget) :
     pWidget_(pWidget),
     pTopWidget_(nullptr),
@@ -263,38 +263,31 @@ void QCefWidgetImpl::browserClosingNotify(CefRefPtr<CefBrowser> browser) {
   QCefManager::getInstance().setBrowserClosing(pWidget_);
   if (browser && browser->GetHost() && browser->GetHost()->GetWindowHandle())
   {
-      ::PostMessage(browser->GetHost()->GetWindowHandle(), WM_CLOSE, 0, 0);
+      ::SendMessage(browser->GetHost()->GetWindowHandle(), WM_CLOSE, 0, 0);
   }
 }
 
 void QCefWidgetImpl::browserDestoryedNotify(CefRefPtr<CefBrowser> browser) {
   qDebug().noquote() << "QCefWidgetImpl::browserDestoryedNotify:" << this;
   Q_ASSERT(!pCefUIEventWin_);
-
+  qDebug() << "pTopWidget_ = 111111111111111 " << pTopWidget_;
   QCefManager::getInstance().setBrowserClosed(pWidget_);
-
+  qDebug() << "pTopWidget_ = 22222222222222222 " << pTopWidget_;
   if (QCefManager::getInstance().aliveBrowserCount(pTopWidget_) == 0) {
     QCefManager::getInstance().unhookTopWidget(pTopWidget_);
     QCefManager::getInstance().removeAllCefWidgets(pTopWidget_);
     if (pTopWidget_) {
-      QMetaObject::invokeMethod(pTopWidget_, [this]()
-      {
-          if (pTopWidget_)
-          {
-              qDebug() << "pTopWidget_ = " <<  pTopWidget_;
-             //pTopWidget_->close();
-          }
-      }, Qt::QueuedConnection);
+        QWidget * ptr = getTopWidget(pTopWidget_);
+        ptr->deleteLater();
     }
   }
-  emit signal_close();
 }
 
 LRESULT CALLBACK QCefWidgetImpl::SubclassedWindowProc(HWND hWnd,
                                                       UINT message,
                                                       WPARAM wParam,
                                                       LPARAM lParam) {
-    qDebug() << __FUNCTION__ << hWnd << message << wParam << lParam;
+//    qDebug() << __FUNCTION__ << hWnd << message << wParam << lParam;
   WNDPROC hPreWndProc =
       reinterpret_cast<WNDPROC>(::GetPropW(hWnd, kPreWndProc));
   HRGN hRegion = reinterpret_cast<HRGN>(::GetPropW(hWnd, kDraggableRegion));
@@ -319,7 +312,7 @@ LRESULT CALLBACK QCefWidgetImpl::SubclassedWindowProc(HWND hWnd,
 void QCefWidgetImpl::subclassWindow(HWND hWnd,
                                     HRGN hRegion,
                                     HWND hTopLevelWnd) {
-    qDebug() << __FUNCTION__ << hWnd << hRegion << hTopLevelWnd;
+    //qDebug() << __FUNCTION__ << hWnd << hRegion << hTopLevelWnd;
 
   HANDLE hParentWndProc = ::GetPropW(hWnd, kPreWndProc);
   if (hParentWndProc) {
@@ -357,7 +350,7 @@ void QCefWidgetImpl::unSubclassWindow(HWND hWnd) {
 }
 
 BOOL CALLBACK QCefWidgetImpl::SubclassWindowsProc(HWND hwnd, LPARAM lParam) {
-    qDebug() << __FUNCTION__ << hwnd << lParam;
+    //qDebug() << __FUNCTION__ << hwnd << lParam;
     QCefWidgetImpl* pImpl = (QCefWidgetImpl*)lParam;
   subclassWindow(hwnd,
                  reinterpret_cast<HRGN>(pImpl->draggableRegion_),
@@ -370,6 +363,22 @@ BOOL CALLBACK QCefWidgetImpl::UnSubclassWindowsProc(HWND hwnd, LPARAM lParam) {
     unSubclassWindow(hwnd);
   return TRUE;
 }
+
+QWidget* QCefWidgetImpl::getTopWidget(QWidget* pWidget)
+{
+    Q_ASSERT(pWidget);
+    if (!pWidget)
+        return nullptr;
+
+    QWidget* topWidget = pWidget;
+    while (topWidget->parent()) {
+        topWidget = (QWidget*)topWidget->parent();
+    }
+
+    Q_ASSERT(topWidget);
+    return topWidget;
+}
+
 
 void QCefWidgetImpl::onScreenChanged(QScreen* screen) {
   qDebug().noquote() << "onScreenChanged";
@@ -596,6 +605,7 @@ bool QCefWidgetImpl::event(QEvent* event) {
   }
   else if (QEvent::Close == event->type())
   {
+      event->ignore();
       if (getCefBrowserHost()) getCefBrowserHost()->CloseBrowser(false);
       //if (getCefBrowserHost()) getCefBrowserHost()->TryCloseBrowser();
   }

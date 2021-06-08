@@ -21,7 +21,7 @@ CefWnd::CefWnd(QWidget* parent /*= nullptr*/) :
     browserBkColor_(255, 255, 255, 255),
     pCefWidget_(nullptr),
     pCefGLWidget_(nullptr) {
-  setAttribute(Qt::WA_DeleteOnClose, true);
+  //setAttribute(Qt::WA_DeleteOnClose, true);
   qDebug() << __FUNCTION__ << this;
 }
 
@@ -74,8 +74,6 @@ void CefWnd::setupUi() {
             &QCefOpenGLWidget::cefQueryRequest,
             this,
             &CefWnd::onCefQueryRequest);
-    connect(pCefGLWidget_, SIGNAL(signal_close()), this, SLOT(slot_close()), Qt::QueuedConnection);
-    connect(pCefWidget_, SIGNAL(destroyed(QObject*)), this, SLOT(slot_destroyed(QObject*)), Qt::QueuedConnection);
   }
   else {
     pCefWidget_ = new QCefWidget(initUrl_);
@@ -99,8 +97,6 @@ void CefWnd::setupUi() {
             &QCefWidget::cefQueryRequest,
             this,
             &CefWnd::onCefQueryRequest);
-    connect(pCefWidget_, SIGNAL(signal_close()), this, SLOT(slot_close()), Qt::QueuedConnection);
-    connect(pCefWidget_, SIGNAL(destroyed(QObject*)), this, SLOT(slot_destroyed(QObject*)), Qt::QueuedConnection);
   }
 
   QHBoxLayout* hlMain = new QHBoxLayout();
@@ -268,18 +264,23 @@ void CefWnd::closeEvent(QCloseEvent* event) {
         if (pCefWidget_)
         {
             setParent(nullptr);
-            hide();
+            //hide();
             pCefWidget_->close();
-            qDebug() << __FUNCTION__ <<this << event;
-            event->ignore();
+            //pCefWidget_->deleteLater();
+            pCefWidget_ = nullptr;
+            qDebug() << __FUNCTION__ << "....................."<<this << event;
             return;
         }
     }
+
   if (!usingHideInsteadClose_ || forceClose_) {
-    event->accept();
+    //event->accept();
+    QWidget::closeEvent(event);
+    qDebug() << __FUNCTION__ << "11111111111111111111111111   accept" << this << event;
   }
   else {
     event->ignore();
+    qDebug() << __FUNCTION__ << "11111111111111111111111111   ignore" << this << event;
     this->hide();
   }
 }
@@ -377,14 +378,6 @@ void CefWnd::onCefQueryRequest(const QCefQuery& query) {
     pCefGLWidget_->responseCefQuery(rsp);
   else
     pCefWidget_->responseCefQuery(rsp);
-}
-
-void CefWnd::slot_close() {
-    qDebug() << __FUNCTION__ << this;
-    //return;
-  setParent(nullptr);
-  pCefWidget_ = nullptr;
-  close();
 }
 
 void CefWnd::slot_destroyed(QObject*) {

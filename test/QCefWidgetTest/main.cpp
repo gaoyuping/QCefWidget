@@ -1,6 +1,8 @@
 #include "TestWnd.h"
 #include <QtWidgets/QApplication>
+//#include "src\QCefWidget\QCefManager.h"
 
+#include <QThread>
 #pragma execution_character_set("utf-8")
 
 int main(int argc, char* argv[]) {
@@ -16,5 +18,6 @@ int main(int argc, char* argv[]) {
   TestWnd w;
   w.show();
   int iret = a.exec();
+  //QCefManager::getInstance().waitCefQuit();
   return iret;
 }

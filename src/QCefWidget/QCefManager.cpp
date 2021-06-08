@@ -85,6 +85,18 @@ void QCefManager::uninitializeCef() {
   initialized_ = false;
 }
 
+#include <QThread>
+
+void QCefManager::waitCefQuit()
+{
+    int icout = 100;
+    while (icout > 0)
+    {
+        QThread::msleep(50);
+        --icout;
+    }
+}
+
 QWidget* QCefManager::addBrowser(QWidget* pCefWidget,
                                  QCefWidgetImpl* cefWidgetImpl,
                                  CefRefPtr<CefBrowser> browser,
@@ -100,7 +112,7 @@ QWidget* QCefManager::addBrowser(QWidget* pCefWidget,
   if (!pTopWidget)
     return nullptr;
 
-  qDebug() << __FUNCSIG__ <<  browser->GetHost()->GetWindowHandle();
+  qDebug() << __FUNCTION__ << pTopWidget << QString::number(pTopWidget->winId(), 16) << QString::number(pTopWidget->window()->winId(), 16) << browser->GetHost()->GetWindowHandle();
   CefInfo cefInfo;
   cefInfo.browser = browser;
   cefInfo.cefWidget = pCefWidget;
@@ -118,10 +130,10 @@ QWidget* QCefManager::addBrowser(QWidget* pCefWidget,
   }
 
   if (!cefInfo.cefWidgetTopWidgetPrevWndProc) {
-    cefInfo.cefWidgetTopWidgetPrevWndProc = hookWidget(cefInfo.cefWidgetTopWidgetHwnd);
+    //cefInfo.cefWidgetTopWidgetPrevWndProc = hookWidget(cefInfo.cefWidgetTopWidgetHwnd);
     cefInfo.cefWidgetTopWidget->installEventFilter(this);
   }
-  Q_ASSERT(cefInfo.cefWidgetTopWidgetPrevWndProc);
+  //Q_ASSERT(cefInfo.cefWidgetTopWidgetPrevWndProc);
 
   cefs_.push_back(cefInfo);
 
@@ -166,59 +178,68 @@ void QCefManager::unhookTopWidget(QWidget* pTopWidget) {
 
 void QCefManager::tryCloseAllBrowsers(HWND hTopWidget) {
     qDebug() << __FUNCTION__ << this << "      hTopWidget=" << hTopWidget;
-  std::lock_guard<std::recursive_mutex> lg(cefsMutex_);
-  Q_ASSERT(hTopWidget);
-  if (!hTopWidget)
-    return;
+    HWND cefhwnd = NULL;
+    do 
+    {
+        std::lock_guard<std::recursive_mutex> lg(cefsMutex_);
+        Q_ASSERT(hTopWidget);
+        if (!hTopWidget)
+            return;
 
-  for (std::list<CefInfo>::iterator it = cefs_.begin(); it != cefs_.end(); it++) {
-    if (it->browserStatus == BS_CREATED) {
-      if (it->cefWidgetTopWidgetHwnd == hTopWidget && it->browser &&
-          it->browser->GetHost()) {
-        it->browser->GetHost()->CloseBrowser(false);
-      }
+        for (std::list<CefInfo>::iterator it = cefs_.begin(); it != cefs_.end(); it++) {
+            if (it->browserStatus == BS_CREATED) {
+                if (it->cefWidgetTopWidgetHwnd == hTopWidget && it->browser &&
+                    it->browser->GetHost()) {
+                    it->browser->GetHost()->CloseBrowser(false);
+                }
+            }
+            else if (it->browserStatus == BS_CLOSING && !it->osrMode) {
+                if (it->browser && it->browser->GetHost())
+                    //it->browser->GetHost()->CloseBrowser(true);
+                    cefhwnd = it->browser->GetHost()->GetWindowHandle();
+            }
+        }
+    } while (false);
+    if (cefhwnd)
+    {
+        //it->browser->GetHost()->CloseBrowser(false);
+        qDebug() << __FUNCTION__ << "   browser->GetHost()->GetWindowHandle() = " << cefhwnd;
+        SendMessage(cefhwnd, WM_CLOSE, 0, 0);
     }
-    else if (it->browserStatus == BS_CLOSING && !it->osrMode) {
-      HWND cefhwnd = NULL;
-      if (it->browser && it->browser->GetHost())
-          //it->browser->GetHost()->CloseBrowser(true);
-        cefhwnd = it->browser->GetHost()->GetWindowHandle();
-      if (cefhwnd)
-      {
-          //it->browser->GetHost()->CloseBrowser(false);
-          qDebug() <<__FUNCTION__ << "   browser->GetHost()->GetWindowHandle() = " << cefhwnd;
-          //PostMessage(cefhwnd, WM_CLOSE, 0, 0);
-      }
-    }
-  }
 }
 
 void QCefManager::tryCloseAllBrowsers(QWidget* pTopLevelWidget) {
     qDebug() << __FUNCTION__ << this << "      pTopLevelWidget=" << pTopLevelWidget;
-  std::lock_guard<std::recursive_mutex> lg(cefsMutex_);
-  Q_ASSERT(pTopLevelWidget);
-  if (!pTopLevelWidget)
-    return;
 
-  for (std::list<CefInfo>::iterator it = cefs_.begin(); it != cefs_.end(); it++) {
-    if (it->browserStatus == BS_CREATED) {
-      if (it->cefWidgetTopWidget == pTopLevelWidget && it->browser &&
-          it->browser->GetHost()) {
-        it->browser->GetHost()->CloseBrowser(false);
-      }
+    HWND cefhwnd = NULL;
+    do
+    {
+        std::lock_guard<std::recursive_mutex> lg(cefsMutex_);
+        Q_ASSERT(pTopLevelWidget);
+        if (!pTopLevelWidget)
+            return;
+
+        for (std::list<CefInfo>::iterator it = cefs_.begin(); it != cefs_.end(); it++) {
+            if (it->browserStatus == BS_CREATED) {
+                if (it->cefWidgetTopWidget == pTopLevelWidget && it->browser &&
+                    it->browser->GetHost()) {
+                    it->browser->GetHost()->CloseBrowser(false);
+                }
+            }
+            else if (it->browserStatus == BS_CLOSING && !it->osrMode) {
+                HWND cefhwnd = NULL;
+                if (it->browser && it->browser->GetHost())
+                    //it->browser->GetHost()->CloseBrowser(true);
+                    cefhwnd = it->browser->GetHost()->GetWindowHandle();
+            }
+        }
+    } while (false);
+    if (cefhwnd)
+    {
+        //it->browser->GetHost()->CloseBrowser(false);
+        qDebug() << __FUNCTION__ << "   browser->GetHost()->GetWindowHandle() = " << cefhwnd;
+        SendMessage(cefhwnd, WM_CLOSE, 0, 0);
     }
-    else if (it->browserStatus == BS_CLOSING && !it->osrMode) {
-      HWND cefhwnd = NULL;
-      if (it->browser && it->browser->GetHost())
-          //it->browser->GetHost()->CloseBrowser(true);
-        cefhwnd = it->browser->GetHost()->GetWindowHandle();
-      if (cefhwnd)
-      {
-          //PostMessage(cefhwnd, WM_CLOSE, 0, 0);
-      }
-        
-    }
-  }
 }
 
 int QCefManager::aliveBrowserCount(HWND hTopWidget) {
@@ -364,7 +385,7 @@ WNDPROC QCefManager::hookWidget(HWND hTopWidget) {
   ::SetWindowLongPtr(hTopWidget, GWLP_USERDATA, reinterpret_cast<LPARAM>(this));
   return (WNDPROC)SetWindowLongPtr(hTopWidget, GWLP_WNDPROC, (LONG_PTR)&newWndProc);
 }
-
+#include <QThread>
 #if (defined Q_OS_WIN32 || defined Q_OS_WIN64)
 LRESULT CALLBACK QCefManager::newWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 #if (defined _DEBUG) || (defined DEBUG)
@@ -413,6 +434,7 @@ LRESULT CALLBACK QCefManager::newWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
     }
     else {
       qDebug().noquote() << "Ignore WM_CLOSE" << "hWnd=" << hWnd;
+      //QThread::msleep((long long)20 * 1000);
       // deny close
       return 0;
     }
@@ -425,6 +447,7 @@ LRESULT CALLBACK QCefManager::newWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
   return ::CallWindowProc(preWndProc, hWnd, uMsg, wParam, lParam);
 }
 
+
 bool QCefManager::eventFilter(QObject* obj, QEvent* event) {
   if (event->type() == QEvent::Close) {
     qDebug().noquote() << "QCefManager::eventFilter QEvent::Close, obj:" << obj;
@@ -434,22 +457,28 @@ bool QCefManager::eventFilter(QObject* obj, QEvent* event) {
         continue;
       QCefWidgetImpl* pImp = it->cefWidgetImpl;
       Q_ASSERT(pImp);
-      if (pImp && !pImp->browserSetting().autoDestroyCefWhenCloseEvent) {
-        qDebug().noquote() << "Not Destroy CEF";
-
-        // Not return false
-        // pass control to the caller, caller's closeEvent(...) will be called.
-        return QObject::eventFilter(obj, event);
-      }
+//       if (pImp && !pImp->browserSetting().autoDestroyCefWhenCloseEvent) {
+//         qDebug().noquote() << "Not Destroy CEF";
+// 
+//         // Not return false
+//         // pass control to the caller, caller's closeEvent(...) will be called.
+//         return QObject::eventFilter(obj, event);
+//       }
       this->tryCloseAllBrowsers(it->cefWidgetTopWidget);
 
       Q_ASSERT(this->aliveBrowserCount(it->cefWidgetTopWidget) > 0);
 
       it->cefWidgetTopWidget->removeEventFilter(this);
+      
+
       event->ignore();
       qDebug().noquote() << "Ignore close event";
       return true;
     }
+  }
+  else if (QEvent::Destroy == event->type())
+  {
+      qDebug() << "QCefManager::eventFilter QEvent::Destroy, obj:" << obj;
   }
 
   return QObject::eventFilter(obj, event);

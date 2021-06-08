@@ -364,19 +364,19 @@ void TestWnd::onPushButtonNewBrowserClicked() {
   if (!checkboxInitHide_->isChecked())
     pCefWnd->show();
 
-  switch (++icount)
-  {
-  case 1:
-      pCefWnd->move(0, 0);
-      pCefWnd->resize(500, 200);
-      break;
-  case 2:
-      pCefWnd->move(0, 200);
-      pCefWnd->resize(500, 200);
-      break;
-  default:
-      break;
-  }
+//   switch (++icount)
+//   {
+//   case 1:
+//       pCefWnd->move(0, 0);
+//       pCefWnd->resize(500, 200);
+//       break;
+//   case 2:
+//       pCefWnd->move(0, 200);
+//       pCefWnd->resize(500, 200);
+//       break;
+//   default:
+//       break;
+//   }
 
   if (m_maskptr)
   {
@@ -388,7 +388,7 @@ void TestWnd::onPushButtonNewBrowserClicked() {
     m_maskptr->setStyleSheet("background: rgba(255,0,0,50%)");
     m_maskptr->move(0, 0);
     m_maskptr->resize(700, 400);
-    m_maskptr->show();
+    m_maskptr->hide();
   }
 }
 

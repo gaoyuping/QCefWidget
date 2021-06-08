@@ -93,6 +93,7 @@ protected:
   static BOOL CALLBACK SubclassWindowsProc(HWND hwnd, LPARAM lParam);
   static BOOL CALLBACK UnSubclassWindowsProc(HWND hwnd, LPARAM lParam);
 
+  QWidget* getTopWidget(QWidget* pWidget);
 private slots:
   void onScreenChanged(QScreen *screen);
 

@@ -22,6 +22,7 @@ class QCefManager : public QObject {
   static QCefManager& getInstance();
   void initializeCef();
   void uninitializeCef();
+  void waitCefQuit();
 
   QWidget* addBrowser(QWidget* pCefWidget,
                       QCefWidgetImpl* impl,

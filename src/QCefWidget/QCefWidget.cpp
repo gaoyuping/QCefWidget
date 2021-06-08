@@ -33,6 +33,7 @@ QCefWidget::QCefWidget(const QString& url, QWidget* parent) :
 }
 
 QCefWidget::~QCefWidget() {
+    emit signal_close();
   qDebug().noquote() << "QCefWidget::~QCefWidget" << this;
 }
 
@@ -197,12 +198,6 @@ QString QCefWidget::CefVersion() {
       .arg(CEF_VERSION_MAJOR)
       .arg(CEF_VERSION_MINOR)
       .arg(CEF_VERSION_PATCH);
-}
-
-void QCefWidget::slot_close()
-{
-    qDebug() << __FUNCTION__ << this;
-    close();
 }
 
 bool QCefWidget::nativeEvent(const QByteArray& eventType,

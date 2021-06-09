@@ -73,11 +73,15 @@ void QCefManager::initializeCef() {
 void QCefManager::uninitializeCef() {
     qDebug() << __FUNCTION__ << this;
     if (!initialized_)
-    return;
+    {
+        qDebug() << __FUNCTION__;
+        return;
+    }
   static bool hasCalled = false;
   Q_ASSERT(!hasCalled);
   hasCalled = true;
 
+  waitCefQuit();
   app_ = nullptr;
 
   CefShutdown();
@@ -86,15 +90,34 @@ void QCefManager::uninitializeCef() {
 }
 
 #include <QThread>
+#include <QTimer>
 
 void QCefManager::waitCefQuit()
 {
-    int icout = 100;
-    while (icout > 0)
+    qDebug() << __FUNCTION__ << __LINE__ << this;
+    QEventLoop loop;
+    QTimer m_timer(this);
+    connect(&m_timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    int icout = 10;
+    do
     {
-        QThread::msleep(50);
-        --icout;
+        std::lock_guard<std::recursive_mutex> lg(waitDMutex_);
+        icout = m_waitWaitDestoryedList.size();
+    } while (false);
+
+    while (icout)
+    {
+        qDebug() << __FUNCTION__ << __LINE__ << icout << this;
+        m_timer.start(10);
+        loop.exec();
+        do
+        {
+            std::lock_guard<std::recursive_mutex> lg(waitDMutex_);
+            icout = m_waitWaitDestoryedList.size();
+        } while (false);
     }
+
+    qDebug() << __FUNCTION__ << __LINE__ << this;
 }
 
 QWidget* QCefManager::addBrowser(QWidget* pCefWidget,
@@ -362,6 +385,25 @@ void QCefManager::devToolsClosedNotify(QCefDevToolsWnd* pWnd) {
       break;
     }
   }
+}
+
+void QCefManager::addWaitDestoryed(QWidget* ptr)
+{
+    qDebug() << __FUNCTION__ << ptr;
+    std::lock_guard<std::recursive_mutex> lg(waitDMutex_);
+    connect(ptr, &QWidget::destroyed, this, &QCefManager::slot_removeWaitDestoryed);
+    m_waitWaitDestoryedList.insert(std::make_pair((QObject*)ptr, 0));
+}
+
+void QCefManager::slot_removeWaitDestoryed(QObject* ptr)
+{
+    qDebug() << __FUNCTION__ << sender() << ptr;
+    std::lock_guard<std::recursive_mutex> lg(waitDMutex_);
+    std::map<QObject*, int>::iterator iter = m_waitWaitDestoryedList.find(sender());
+    if (iter != m_waitWaitDestoryedList.end())
+    {
+        m_waitWaitDestoryedList.erase(iter);
+    }
 }
 
 QWidget* QCefManager::getTopWidget(QWidget* pWidget) {

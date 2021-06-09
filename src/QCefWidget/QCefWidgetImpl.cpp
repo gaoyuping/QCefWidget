@@ -278,6 +278,7 @@ void QCefWidgetImpl::browserDestoryedNotify(CefRefPtr<CefBrowser> browser) {
     QCefManager::getInstance().removeAllCefWidgets(pTopWidget_);
     if (pTopWidget_) {
         QWidget * ptr = getTopWidget(pTopWidget_);
+        QCefManager::getInstance().addWaitDestoryed(ptr);
         ptr->deleteLater();
     }
   }

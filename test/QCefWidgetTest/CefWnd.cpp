@@ -218,18 +218,6 @@ void CefWnd::setBrowserBkColor(QColor c) {
 
 void CefWnd::forceClose() {
   qDebug() << __FUNCTION__ << this;
-//   if (parentWidget())
-//   {
-//       PostMessage((HWND)winId(), WM_CLOSE, 0, 0);
-//       return;
-//   }
-//   forceClose_ = true;
-//   if (pCefWidget_) {
-//     pCefWidget_->setAutoDestoryCefWhenCloseEvent(true);
-//   }
-//   else if (pCefGLWidget_)
-//     pCefGLWidget_->setAutoDestoryCefWhenCloseEvent(true);
-
   forceClose_ = true;
   close();
 }
@@ -255,7 +243,9 @@ void CefWnd::closeEvent(QCloseEvent* event) {
     if (usingGLWidget_) {
         if (pCefGLWidget_)
         {
+            setParent(nullptr);
             pCefGLWidget_->close();
+            pCefGLWidget_ = nullptr;
             event->ignore();
             return;
         }
@@ -268,6 +258,7 @@ void CefWnd::closeEvent(QCloseEvent* event) {
             pCefWidget_->close();
             //pCefWidget_->deleteLater();
             pCefWidget_ = nullptr;
+            event->ignore();
             qDebug() << __FUNCTION__ << "....................."<<this << event;
             return;
         }

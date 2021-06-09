@@ -42,6 +42,12 @@ class QCefManager : public QObject {
   void closeDevTools(QWidget* pCefWidget);
   void devToolsClosedNotify(QCefDevToolsWnd* pWnd);
 
+  void addWaitDestoryed(QWidget*);
+
+
+protected slots:
+    void slot_removeWaitDestoryed(QObject*);
+
  protected:
   QCefManager();
   ~QCefManager();
@@ -88,5 +94,7 @@ class QCefManager : public QObject {
 
   std::recursive_mutex cefsMutex_;
   std::list<CefInfo> cefs_;
+  std::map<QObject*, int> m_waitWaitDestoryedList;
+  std::recursive_mutex waitDMutex_;
 };
 #endif  // !QCEF_MANAGER_H_

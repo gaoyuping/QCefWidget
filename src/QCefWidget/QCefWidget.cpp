@@ -22,7 +22,7 @@ QCefWidget::QCefWidget(const QString& url, QWidget* parent) :
   setAttribute(Qt::WA_StyledBackground, true);
 
   pImpl_ = std::make_unique<QCefWidgetImpl>(WidgetType::WT_Widget, this);
-  connect(pImpl_.get(), SIGNAL(destroyed(QObject *)), this, SIGNAL(signal_destroyed(QObject *)));
+  //connect(pImpl_.get(), SIGNAL(destroyed(QObject *)), this, SIGNAL(signal_destroyed(QObject *)));
   connect(pImpl_.get(), SIGNAL(signal_close()), this, SIGNAL(signal_close()), Qt::QueuedConnection);
   static int i = 1;
   g_strobj = QString("strobj_%1_").arg(i++);

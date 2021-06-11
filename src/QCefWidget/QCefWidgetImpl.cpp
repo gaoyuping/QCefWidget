@@ -263,12 +263,18 @@ void QCefWidgetImpl::browserClosingNotify(CefRefPtr<CefBrowser> browser) {
   QCefManager::getInstance().setBrowserClosing(pWidget_);
   if (browser && browser->GetHost() && browser->GetHost()->GetWindowHandle())
   {
-      ::SendMessage(browser->GetHost()->GetWindowHandle(), WM_CLOSE, 0, 0);
+      if (pTopWidget_) {
+          QWidget * ptr = getTopWidget(pTopWidget_);
+          QCefManager::getInstance().addWaitDestoryed(ptr);
+      }
+      ::PostMessage(browser->GetHost()->GetWindowHandle(), WM_CLOSE, 0, 0);
   }
+  qDebug() << __FUNCTION__ << __LINE__ << this;
 }
 
 void QCefWidgetImpl::browserDestoryedNotify(CefRefPtr<CefBrowser> browser) {
   qDebug().noquote() << "QCefWidgetImpl::browserDestoryedNotify:" << this;
+  qDebug() << __FUNCTION__ << __LINE__ << this;
   Q_ASSERT(!pCefUIEventWin_);
   qDebug() << "pTopWidget_ = 111111111111111 " << pTopWidget_;
   QCefManager::getInstance().setBrowserClosed(pWidget_);
@@ -282,6 +288,7 @@ void QCefWidgetImpl::browserDestoryedNotify(CefRefPtr<CefBrowser> browser) {
         ptr->deleteLater();
     }
   }
+  qDebug() << __FUNCTION__ << __LINE__ << this;
 }
 
 LRESULT CALLBACK QCefWidgetImpl::SubclassedWindowProc(HWND hWnd,

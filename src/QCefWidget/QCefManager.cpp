@@ -152,7 +152,7 @@ QWidget* QCefManager::addBrowser(QWidget* pCefWidget,
     }
   }
 
-  if (!cefInfo.cefWidgetTopWidgetPrevWndProc) {
+  if (!cefInfo.cefWidgetTopWidgetPrevWndProc && !cefInfo.osrMode) {
     //cefInfo.cefWidgetTopWidgetPrevWndProc = hookWidget(cefInfo.cefWidgetTopWidgetHwnd);
     cefInfo.cefWidgetTopWidget->installEventFilter(this);
   }
@@ -284,12 +284,12 @@ int QCefManager::aliveBrowserCount(HWND hTopWidget) {
 }
 
 int QCefManager::aliveBrowserCount(QWidget* pTopWidget) {
-    qDebug() << __FUNCTION__ << this;
     Q_ASSERT(pTopWidget);
   if (!pTopWidget)
     return 0;
-
+  qDebug() << __FUNCTION__ << __LINE__ << this;
   std::lock_guard<std::recursive_mutex> lg(cefsMutex_);
+  qDebug() << __FUNCTION__ << __LINE__ << this;
   int count = 0;
   for (std::list<CefInfo>::iterator it = cefs_.begin(); it != cefs_.end(); it++) {
     if (it->cefWidgetTopWidget == pTopWidget) {
@@ -302,8 +302,9 @@ int QCefManager::aliveBrowserCount(QWidget* pTopWidget) {
 }
 
 void QCefManager::setBrowserClosing(QWidget* pCefWidget) {
-    qDebug() << __FUNCTION__ << this;
+    qDebug() << __FUNCTION__ << __LINE__ << this;
     std::lock_guard<std::recursive_mutex> lg(cefsMutex_);
+    qDebug() << __FUNCTION__ << __LINE__ <<  this;
   Q_ASSERT(pCefWidget);
   if (!pCefWidget)
     return;
@@ -318,6 +319,7 @@ void QCefManager::setBrowserClosing(QWidget* pCefWidget) {
 void QCefManager::setBrowserClosed(QWidget* pCefWidget) {
     qDebug() << __FUNCTION__ << this;
     std::lock_guard<std::recursive_mutex> lg(cefsMutex_);
+    qDebug() << __FUNCTION__ << __LINE__ << this;
   Q_ASSERT(pCefWidget);
   if (!pCefWidget)
     return;
@@ -389,8 +391,9 @@ void QCefManager::devToolsClosedNotify(QCefDevToolsWnd* pWnd) {
 
 void QCefManager::addWaitDestoryed(QWidget* ptr)
 {
-    qDebug() << __FUNCTION__ << ptr;
+    qDebug() << __FUNCTION__ << __LINE__ << this;
     std::lock_guard<std::recursive_mutex> lg(waitDMutex_);
+    qDebug() << __FUNCTION__ << __LINE__ << this;
     connect(ptr, &QWidget::destroyed, this, &QCefManager::slot_removeWaitDestoryed);
     m_waitWaitDestoryedList.insert(std::make_pair((QObject*)ptr, 0));
 }
@@ -399,6 +402,7 @@ void QCefManager::slot_removeWaitDestoryed(QObject* ptr)
 {
     qDebug() << __FUNCTION__ << sender() << ptr;
     std::lock_guard<std::recursive_mutex> lg(waitDMutex_);
+    qDebug() << __FUNCTION__ << __LINE__ << this;
     std::map<QObject*, int>::iterator iter = m_waitWaitDestoryedList.find(sender());
     if (iter != m_waitWaitDestoryedList.end())
     {
@@ -511,16 +515,11 @@ bool QCefManager::eventFilter(QObject* obj, QEvent* event) {
       Q_ASSERT(this->aliveBrowserCount(it->cefWidgetTopWidget) > 0);
 
       it->cefWidgetTopWidget->removeEventFilter(this);
-      
 
       event->ignore();
       qDebug().noquote() << "Ignore close event";
       return true;
     }
-  }
-  else if (QEvent::Destroy == event->type())
-  {
-      qDebug() << "QCefManager::eventFilter QEvent::Destroy, obj:" << obj;
   }
 
   return QObject::eventFilter(obj, event);
